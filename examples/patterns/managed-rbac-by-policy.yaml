@@ -9,7 +9,7 @@ metadata:
 apiVersion: rbac.therapist.io/v1alpha1
 kind: Team
 metadata:
-  name: workflow-operators
+  name: care-circle-operators
 spec:
   description: Team operating workflow infrastructure.
   members:
@@ -19,33 +19,33 @@ spec:
 apiVersion: rbac.therapist.io/v1alpha1
 kind: AccessPolicy
 metadata:
-  name: workflow-managed-rbac
+  name: healthy-boundary-contracts
 spec:
   rationale: >
     AccessPolicy manages custom Role/ClusterRole resources and binds them to
     workflow operators from a single declarative object.
   subjects:
     - teamRef:
-        name: workflow-operators
+        name: care-circle-operators
   managedClusterRoles:
-    - name: workflow-controller-reader
+    - name: boundary-template-reader
       rules:
         - apiGroups: ["argoproj.io"]
           resources: ["workflows", "workflowtemplates"]
           verbs: ["get", "list", "watch"]
   managedRoles:
-    - name: workflow-secret-reader
+    - name: boundary-secret-reader
       namespace: workflow-ops
       rules:
         - apiGroups: [""]
           resources: ["secrets"]
           verbs: ["get", "list"]
   roles:
-    - clusterRole: workflow-controller-reader
+    - clusterRole: boundary-template-reader
       namespaces:
         names:
           - workflow-ops
-    - role: workflow-secret-reader
+    - role: boundary-secret-reader
       namespaces:
         names:
           - workflow-ops

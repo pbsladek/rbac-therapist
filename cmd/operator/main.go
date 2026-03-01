@@ -4,7 +4,7 @@
 //   - Team:         resolves team membership and inheritance
 //   - AccessPolicy: reconciles access policies into RBAC bindings
 //   - RBACBinding:  reconciles low-level direct bindings
-//   - Session:      maintains the singleton RBACSession snapshot
+//   - Session:      maintains the singleton RBACSession session-notes snapshot
 //
 // Webhooks registered:
 //   - AccessPolicyValidator / AccessPolicyDefaulter
@@ -18,8 +18,8 @@ import (
 	"time"
 
 	"go.uber.org/zap/zapcore"
-	rbacv1 "k8s.io/api/rbac/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -59,7 +59,7 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election for high availability.")
 	flag.BoolVar(&enableWebhooks, "enable-webhooks", true, "Enable admission webhooks (disable for local dev without cert-manager).")
 	flag.DurationVar(&sessionRefresh, "session-refresh-interval", 5*time.Minute,
-		"How often the RBACSession snapshot is refreshed (e.g. 5m, 1h).")
+		"How often the RBACSession session-notes snapshot is refreshed (e.g. 5m, 1h).")
 	flag.Parse()
 
 	opts := zap.Options{
@@ -114,7 +114,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Session controller — maintains the RBACSession snapshot.
+	// Session controller — maintains the RBACSession session-notes snapshot.
 	if err := (&sessionctrl.Reconciler{
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("Session"),

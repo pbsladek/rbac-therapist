@@ -21,7 +21,7 @@ import (
 
 func newAuditCommand() *cobra.Command {
 	var (
-		llmMode   bool
+		llmMode    bool
 		outputFile string
 	)
 
@@ -43,7 +43,7 @@ With --llm (requires ANTHROPIC_API_KEY), an LLM enriches the report with:
   - Identification of suspicious or overly broad access patterns
   - Executive summary suitable for security reviews
 
-The report reads from the current RBACSession snapshot.
+The report reads from the current RBACSession session-notes snapshot.
 Run 'rbact snapshot --wait' first for the most up-to-date view.`,
 		Example: `  # Generate a structured text audit report
   rbact audit
@@ -266,4 +266,3 @@ AUDIT REPORT:
 
 	return report + "\n---\n\n## LLM Security Analysis\n\n" + enriched, nil
 }
-

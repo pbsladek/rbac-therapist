@@ -1,9 +1,9 @@
 apiVersion: rbac.therapist.io/v1alpha1
 kind: Team
 metadata:
-  name: platform-engineers
+  name: freud-fellows
 spec:
-  description: Platform engineering team for e2e validation.
+  description: Freud-inspired foundational care circle for e2e validation.
   members:
     - kind: Group
       name: platform@acme.com
@@ -14,14 +14,14 @@ spec:
 apiVersion: rbac.therapist.io/v1alpha1
 kind: Team
 metadata:
-  name: platform-oncall
+  name: gottman-guides
 spec:
-  description: On-call team extending platform-engineers.
+  description: Gottman-inspired response team extending freud-fellows.
   members:
     - kind: User
       name: oncall-user@acme.com
   extends:
-    - name: platform-engineers
+    - name: freud-fellows
   tags:
     tier: platform
     env: production
@@ -29,9 +29,9 @@ spec:
 apiVersion: rbac.therapist.io/v1alpha1
 kind: Team
 metadata:
-  name: app-developers
+  name: boundary-builders
 spec:
-  description: Application developers for staging namespaces.
+  description: Boundary builders for application staging namespaces.
   members:
     - kind: Group
       name: developers@acme.com
@@ -42,9 +42,9 @@ spec:
 apiVersion: rbac.therapist.io/v1alpha1
 kind: Team
 metadata:
-  name: data-engineers
+  name: boundary-analysts
 spec:
-  description: Data engineering team for long-policy e2e tests.
+  description: Boundary analysts for long-policy e2e tests.
   members:
     - kind: Group
       name: data@acme.com
@@ -55,9 +55,9 @@ spec:
 apiVersion: rbac.therapist.io/v1alpha1
 kind: Team
 metadata:
-  name: security-auditors
+  name: boundary-auditors
 spec:
-  description: Security auditing team for broad read-only access examples.
+  description: Boundary auditors for broad read-only access examples.
   members:
     - kind: Group
       name: security-auditors@acme.com

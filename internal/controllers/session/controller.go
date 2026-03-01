@@ -1,6 +1,6 @@
-// Package session contains the RBACSession snapshot controller.
+// Package session contains the RBACSession session-notes controller.
 //
-// The RBACSession controller periodically reconciles a cluster-wide snapshot
+// The RBACSession controller periodically reconciles a cluster-wide session-notes snapshot
 // of all RBAC access managed by rbac-therapist. It reads all AccessPolicies,
 // RBACBindings, and Teams, then builds the full SubjectAccess and
 // NamespaceAccess indexes stored in status.
@@ -42,7 +42,7 @@ const (
 	// The operator removes it after processing. Set by `rbact snapshot`.
 	ForceRefreshAnnotation = "rbac.therapist.io/force-refresh"
 
-	// DefaultRefreshInterval is how often the session refreshes absent changes.
+	// DefaultRefreshInterval is how often session-notes refresh absent changes.
 	DefaultRefreshInterval = 5 * time.Minute
 )
 
@@ -100,7 +100,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, fmt.Errorf("listing Namespaces: %w", err)
 	}
 
-	// Build the snapshot.
+	// Build the session-notes snapshot.
 	status, warnings := buildSnapshot(policies.Items, rbacBindings.Items, teams.Items, namespaces.Items)
 	now := metav1.Now()
 	status.GeneratedAt = &now
@@ -127,7 +127,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		interval = DefaultRefreshInterval
 	}
 
-	log.Info("snapshot updated",
+	log.Info("session-notes updated",
 		"subjects", len(status.SubjectAccess),
 		"namespaces", len(status.NamespaceAccess),
 		"policies", len(status.PolicySummaries),

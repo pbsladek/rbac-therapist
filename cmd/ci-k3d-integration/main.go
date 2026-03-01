@@ -33,9 +33,9 @@ import (
 )
 
 const (
-	sessionName    = "current"
-	rbacBinding    = "ci-break-glass-view"
-	defaultTimeout = 4 * time.Minute
+	sessionNotesName = "current"
+	rbacBinding      = "crisis-intervention-pass"
+	defaultTimeout   = 4 * time.Minute
 
 	operatorNamespace  = "rbac-therapist-system"
 	operatorDeployment = "rbac-therapist-controller-manager"
@@ -69,26 +69,26 @@ func main() {
 		failf("applying e2e examples: %v", err)
 	}
 
-	if err := waitFor(ctx, "AccessPolicy tag-driven-platform-view Ready", func(ctx context.Context) (bool, error) {
-		return isAccessPolicyReady(ctx, c, "tag-driven-platform-view")
+	if err := waitFor(ctx, "AccessPolicy freud-tag-intake-view Ready", func(ctx context.Context) (bool, error) {
+		return isAccessPolicyReady(ctx, c, "freud-tag-intake-view")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "AccessPolicy platform-oncall-admin Ready", func(ctx context.Context) (bool, error) {
-		return isAccessPolicyReady(ctx, c, "platform-oncall-admin")
+	if err := waitFor(ctx, "AccessPolicy gottman-repair-protocol Ready", func(ctx context.Context) (bool, error) {
+		return isAccessPolicyReady(ctx, c, "gottman-repair-protocol")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "AccessPolicy app-developer-edit Ready", func(ctx context.Context) (bool, error) {
-		return isAccessPolicyReady(ctx, c, "app-developer-edit")
+	if err := waitFor(ctx, "AccessPolicy boundary-builders-edit Ready", func(ctx context.Context) (bool, error) {
+		return isAccessPolicyReady(ctx, c, "boundary-builders-edit")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "AccessPolicy long-policy-leaf Ready", func(ctx context.Context) (bool, error) {
-		return isAccessPolicyReady(ctx, c, "long-policy-leaf")
+	if err := waitFor(ctx, "AccessPolicy deep-work-plan Ready", func(ctx context.Context) (bool, error) {
+		return isAccessPolicyReady(ctx, c, "deep-work-plan")
 	}); err != nil {
 		failf("%v", err)
 	}
@@ -111,44 +111,44 @@ func main() {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "AccessPolicy workflow-managed-rbac-e2e Ready", func(ctx context.Context) (bool, error) {
-		return isAccessPolicyReady(ctx, c, "workflow-managed-rbac-e2e")
+	if err := waitFor(ctx, "AccessPolicy boundary-contracts-e2e Ready", func(ctx context.Context) (bool, error) {
+		return isAccessPolicyReady(ctx, c, "boundary-contracts-e2e")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "managed ClusterRole workflow-controller-reader-e2e exists", func(ctx context.Context) (bool, error) {
-		return clusterRoleExists(ctx, c, "workflow-controller-reader-e2e")
+	if err := waitFor(ctx, "managed ClusterRole boundary-template-reader-e2e exists", func(ctx context.Context) (bool, error) {
+		return clusterRoleExists(ctx, c, "boundary-template-reader-e2e")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "managed Role workflow-secret-reader-e2e exists", func(ctx context.Context) (bool, error) {
-		return roleExists(ctx, c, "workflow-ops", "workflow-secret-reader-e2e")
+	if err := waitFor(ctx, "managed Role boundary-secret-reader-e2e exists", func(ctx context.Context) (bool, error) {
+		return roleExists(ctx, c, "workflow-ops", "boundary-secret-reader-e2e")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "tag-driven policy binds in platform-monitoring namespace", func(ctx context.Context) (bool, error) {
-		return roleBindingExists(ctx, c, "platform-monitoring", "tag-driven-platform-view")
+	if err := waitFor(ctx, "freud-tag policy binds in platform-monitoring namespace", func(ctx context.Context) (bool, error) {
+		return roleBindingExists(ctx, c, "platform-monitoring", "freud-tag-intake-view")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "selector policy binds in app-staging namespace", func(ctx context.Context) (bool, error) {
-		return roleBindingExists(ctx, c, "app-staging", "app-developer-edit")
+	if err := waitFor(ctx, "boundary-builders policy binds in app-staging namespace", func(ctx context.Context) (bool, error) {
+		return roleBindingExists(ctx, c, "app-staging", "boundary-builders-edit")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "long policy binds in platform-monitoring namespace", func(ctx context.Context) (bool, error) {
-		return roleBindingExists(ctx, c, "platform-monitoring", "long-policy-leaf")
+	if err := waitFor(ctx, "deep-work plan binds in platform-monitoring namespace", func(ctx context.Context) (bool, error) {
+		return roleBindingExists(ctx, c, "platform-monitoring", "deep-work-plan")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "long policy binds in app-staging namespace", func(ctx context.Context) (bool, error) {
-		return roleBindingExists(ctx, c, "app-staging", "long-policy-leaf")
+	if err := waitFor(ctx, "deep-work plan binds in app-staging namespace", func(ctx context.Context) (bool, error) {
+		return roleBindingExists(ctx, c, "app-staging", "deep-work-plan")
 	}); err != nil {
 		failf("%v", err)
 	}
@@ -177,32 +177,32 @@ func main() {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "workflow managed-rbac policy binds in workflow-ops namespace", func(ctx context.Context) (bool, error) {
-		return roleBindingExists(ctx, c, "workflow-ops", "workflow-managed-rbac-e2e")
+	if err := waitFor(ctx, "boundary contracts policy binds in workflow-ops namespace", func(ctx context.Context) (bool, error) {
+		return roleBindingExists(ctx, c, "workflow-ops", "boundary-contracts-e2e")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "platform-oncall-admin includes inherited view role", func(ctx context.Context) (bool, error) {
-		return accessPolicyHasManagedRole(ctx, c, "platform-oncall-admin", "view")
+	if err := waitFor(ctx, "gottman-repair-protocol includes inherited view role", func(ctx context.Context) (bool, error) {
+		return accessPolicyHasManagedRole(ctx, c, "gottman-repair-protocol", "view")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "platform-oncall-admin includes direct admin role", func(ctx context.Context) (bool, error) {
-		return accessPolicyHasManagedRole(ctx, c, "platform-oncall-admin", "admin")
+	if err := waitFor(ctx, "gottman-repair-protocol includes direct admin role", func(ctx context.Context) (bool, error) {
+		return accessPolicyHasManagedRole(ctx, c, "gottman-repair-protocol", "admin")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "long-policy-leaf includes inherited edit role", func(ctx context.Context) (bool, error) {
-		return accessPolicyHasManagedRole(ctx, c, "long-policy-leaf", "edit")
+	if err := waitFor(ctx, "deep-work-plan includes inherited edit role", func(ctx context.Context) (bool, error) {
+		return accessPolicyHasManagedRole(ctx, c, "deep-work-plan", "edit")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "long-policy-leaf includes direct admin role", func(ctx context.Context) (bool, error) {
-		return accessPolicyHasManagedRole(ctx, c, "long-policy-leaf", "admin")
+	if err := waitFor(ctx, "deep-work-plan includes direct admin role", func(ctx context.Context) (bool, error) {
+		return accessPolicyHasManagedRole(ctx, c, "deep-work-plan", "admin")
 	}); err != nil {
 		failf("%v", err)
 	}
@@ -225,14 +225,14 @@ func main() {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "workflow-managed-rbac-e2e includes managed namespaced role", func(ctx context.Context) (bool, error) {
-		return accessPolicyHasManagedRole(ctx, c, "workflow-managed-rbac-e2e", "workflow-secret-reader-e2e")
+	if err := waitFor(ctx, "boundary-contracts-e2e includes managed namespaced role", func(ctx context.Context) (bool, error) {
+		return accessPolicyHasManagedRole(ctx, c, "boundary-contracts-e2e", "boundary-secret-reader-e2e")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "workflow-managed-rbac-e2e includes managed cluster role", func(ctx context.Context) (bool, error) {
-		return accessPolicyHasManagedRole(ctx, c, "workflow-managed-rbac-e2e", "workflow-controller-reader-e2e")
+	if err := waitFor(ctx, "boundary-contracts-e2e includes managed cluster role", func(ctx context.Context) (bool, error) {
+		return accessPolicyHasManagedRole(ctx, c, "boundary-contracts-e2e", "boundary-template-reader-e2e")
 	}); err != nil {
 		failf("%v", err)
 	}
@@ -249,26 +249,26 @@ func main() {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "RBACSession snapshot includes policy", func(ctx context.Context) (bool, error) {
-		return sessionHasPolicy(ctx, c, sessionName, "platform-oncall-admin")
+	if err := waitFor(ctx, "RBACSession session-notes include gottman policy", func(ctx context.Context) (bool, error) {
+		return sessionHasPolicy(ctx, c, sessionNotesName, "gottman-repair-protocol")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "RBACSession snapshot includes long policy", func(ctx context.Context) (bool, error) {
-		return sessionHasPolicy(ctx, c, sessionName, "long-policy-leaf")
+	if err := waitFor(ctx, "RBACSession session-notes include deep-work plan", func(ctx context.Context) (bool, error) {
+		return sessionHasPolicy(ctx, c, sessionNotesName, "deep-work-plan")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "RBACSession snapshot includes argo policy", func(ctx context.Context) (bool, error) {
-		return sessionHasPolicy(ctx, c, sessionName, "argo-operate-workflows")
+	if err := waitFor(ctx, "RBACSession session-notes include argo policy", func(ctx context.Context) (bool, error) {
+		return sessionHasPolicy(ctx, c, sessionNotesName, "argo-operate-workflows")
 	}); err != nil {
 		failf("%v", err)
 	}
 
-	if err := waitFor(ctx, "RBACSession snapshot includes managed-rbac policy", func(ctx context.Context) (bool, error) {
-		return sessionHasPolicy(ctx, c, sessionName, "workflow-managed-rbac-e2e")
+	if err := waitFor(ctx, "RBACSession session-notes include boundary contracts policy", func(ctx context.Context) (bool, error) {
+		return sessionHasPolicy(ctx, c, sessionNotesName, "boundary-contracts-e2e")
 	}); err != nil {
 		failf("%v", err)
 	}

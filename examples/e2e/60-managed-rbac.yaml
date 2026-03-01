@@ -9,7 +9,7 @@ metadata:
 apiVersion: rbac.therapist.io/v1alpha1
 kind: Team
 metadata:
-  name: workflow-operators-e2e
+  name: care-circle-operators-e2e
 spec:
   description: Workflow operators used by e2e managed-rbac validation.
   members:
@@ -19,33 +19,33 @@ spec:
 apiVersion: rbac.therapist.io/v1alpha1
 kind: AccessPolicy
 metadata:
-  name: workflow-managed-rbac-e2e
+  name: boundary-contracts-e2e
 spec:
   rationale: >
     E2E fixture validating AccessPolicy-managed Role/ClusterRole lifecycle plus
     RoleBinding reconciliation from those managed role definitions.
   subjects:
     - teamRef:
-        name: workflow-operators-e2e
+        name: care-circle-operators-e2e
   managedClusterRoles:
-    - name: workflow-controller-reader-e2e
+    - name: boundary-template-reader-e2e
       rules:
         - apiGroups: ["argoproj.io"]
           resources: ["workflows", "workflowtemplates"]
           verbs: ["get", "list", "watch"]
   managedRoles:
-    - name: workflow-secret-reader-e2e
+    - name: boundary-secret-reader-e2e
       namespace: workflow-ops
       rules:
         - apiGroups: [""]
           resources: ["secrets"]
           verbs: ["get", "list"]
   roles:
-    - clusterRole: workflow-controller-reader-e2e
+    - clusterRole: boundary-template-reader-e2e
       namespaces:
         names:
           - workflow-ops
-    - role: workflow-secret-reader-e2e
+    - role: boundary-secret-reader-e2e
       namespaces:
         names:
           - workflow-ops

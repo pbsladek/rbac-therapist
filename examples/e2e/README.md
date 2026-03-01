@@ -7,8 +7,8 @@ The `cmd/ci-k3d-integration` runner applies these manifests directly, so example
 ## Files
 
 - `00-namespaces.yaml`: namespaces and labels used by selector/tag matching.
-- `10-teams.yaml`: teams, tags, and team inheritance (`extends`).
-- `20-accesspolicies.yaml`: static/selector/tag-based policies plus policy inheritance.
+- `10-teams.yaml`: playful therapy-themed teams/tags and team inheritance (`extends`).
+- `20-accesspolicies.yaml`: Freud/Gottman boundary plans for static/selector/tag-based access.
 - `30-rbacbindings.yaml`: direct break-glass style binding with expiry.
 - `40-long-policies.yaml`: inheritance-heavy and ABAC-heavy long policy fixtures for e2e stress coverage.
 - `50-argo-workflows.yaml`: custom Argo Workflows RBAC (non-default roles) with inheritance and namespaced Role usage.

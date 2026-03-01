@@ -1,7 +1,7 @@
 apiVersion: rbac.therapist.io/v1alpha1
 kind: AccessPolicy
 metadata:
-  name: long-policy-base
+  name: foundational-framework
 spec:
   rationale: >
     Base layer for long-policy e2e coverage. Provides broad read-only visibility
@@ -9,9 +9,9 @@ spec:
     under a larger manifest footprint.
   subjects:
     - teamRef:
-        name: platform-engineers
+        name: freud-fellows
     - teamRef:
-        name: data-engineers
+        name: boundary-analysts
   roles:
     - clusterRole: view
       namespaces:
@@ -25,16 +25,16 @@ spec:
 apiVersion: rbac.therapist.io/v1alpha1
 kind: AccessPolicy
 metadata:
-  name: long-policy-mid
+  name: guided-intervention
 spec:
   rationale: >
     Mid-layer policy for inheritance stress tests. Adds edit access by selector
-    while inheriting read-only grants from long-policy-base.
+    while inheriting read-only grants from foundational-framework.
   extends:
-    - name: long-policy-base
+    - name: foundational-framework
   subjects:
     - teamRef:
-        name: platform-oncall
+        name: gottman-guides
   roles:
     - clusterRole: edit
       namespaces:
@@ -50,21 +50,21 @@ spec:
 apiVersion: rbac.therapist.io/v1alpha1
 kind: AccessPolicy
 metadata:
-  name: long-policy-leaf
+  name: deep-work-plan
 spec:
   rationale: >
     Leaf policy used by e2e to verify long policy specs with team groups, inline
     subjects, ABAC namespace matching, and multi-level inheritance. This policy
     intentionally combines many role entries to exercise parser and reconciler paths.
   extends:
-    - name: long-policy-mid
+    - name: guided-intervention
   subjects:
     - teamRef:
-        name: platform-oncall
+        name: gottman-guides
     - teamRef:
-        name: app-developers
+        name: boundary-builders
     - teamRef:
-        name: security-auditors
+        name: boundary-auditors
     - inline:
         kind: Group
         name: sre-managers@acme.com

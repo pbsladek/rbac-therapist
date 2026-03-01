@@ -1,12 +1,12 @@
 apiVersion: rbac.therapist.io/v1alpha1
 kind: AccessPolicy
 metadata:
-  name: base-read-policy
+  name: healthy-boundaries-baseline
 spec:
-  rationale: Baseline read-only platform access for e2e policy inheritance checks.
+  rationale: Baseline healthy-boundary read access for e2e inheritance checks.
   subjects:
     - teamRef:
-        name: platform-engineers
+        name: freud-fellows
   roles:
     - clusterRole: view
       namespaces:
@@ -16,14 +16,14 @@ spec:
 apiVersion: rbac.therapist.io/v1alpha1
 kind: AccessPolicy
 metadata:
-  name: platform-oncall-admin
+  name: gottman-repair-protocol
 spec:
-  rationale: Platform on-call needs admin plus inherited read access for incident response.
+  rationale: Gottman guides need admin plus inherited read access for incident response.
   extends:
-    - name: base-read-policy
+    - name: healthy-boundaries-baseline
   subjects:
     - teamRef:
-        name: platform-oncall
+        name: gottman-guides
   roles:
     - clusterRole: admin
       namespaces:
@@ -33,12 +33,12 @@ spec:
 apiVersion: rbac.therapist.io/v1alpha1
 kind: AccessPolicy
 metadata:
-  name: app-developer-edit
+  name: boundary-builders-edit
 spec:
-  rationale: App developers need edit permissions in staging namespaces.
+  rationale: Boundary builders need edit permissions in staging namespaces.
   subjects:
     - teamRef:
-        name: app-developers
+        name: boundary-builders
   roles:
     - clusterRole: edit
       namespaces:
@@ -53,12 +53,12 @@ spec:
 apiVersion: rbac.therapist.io/v1alpha1
 kind: AccessPolicy
 metadata:
-  name: tag-driven-platform-view
+  name: freud-tag-intake-view
 spec:
-  rationale: Team tags should drive namespace access using matchTeamTags.
+  rationale: Team tags should drive intake namespace access using matchTeamTags.
   subjects:
     - teamRef:
-        name: platform-engineers
+        name: freud-fellows
   roles:
     - clusterRole: view
       namespaces:

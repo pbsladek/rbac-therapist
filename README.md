@@ -6,7 +6,7 @@ Core idea:
 - Define **who** in `Team` resources.
 - Define **what access** in `AccessPolicy` resources.
 - Keep direct emergency access in `RBACBinding`.
-- Materialize an auditable snapshot in `RBACSession`.
+- Materialize auditable **session-notes** in `RBACSession`.
 
 The operator reconciles these CRDs into native Kubernetes:
 - `RoleBinding`
@@ -26,7 +26,7 @@ Main implemented features:
   - full label selectors (`matchLabels` + `matchExpressions`)
   - tag-based matching (`matchTeamTags`)
 - Expiry and paused policy handling
-- RBACSession snapshot for audit/explain workflows
+- RBACSession session-notes snapshot for audit/explain workflows
 - `rbact` CLI commands for generate/validate/diff/graph/explain/audit/who-can/snapshot/expire
 
 ## Repository Layout
@@ -118,7 +118,7 @@ Managed RBAC e2e fixture:
 - `Team`: identity group + tags + inheritance
 - `AccessPolicy`: subject-to-role policy with namespace selection, inheritance, expiry, pause
 - `RBACBinding`: direct break-glass style binding
-- `RBACSession`: operator-generated access snapshot for explain/audit
+- `RBACSession`: operator-generated session-notes snapshot for explain/audit
 
 ## `rbact` CLI
 

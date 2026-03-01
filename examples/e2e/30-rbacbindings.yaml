@@ -1,7 +1,7 @@
 apiVersion: rbac.therapist.io/v1alpha1
 kind: RBACBinding
 metadata:
-  name: ci-break-glass-view
+  name: crisis-intervention-pass
 spec:
   rationale: Temporary break-glass style binding for CI e2e verification.
   subjects:
