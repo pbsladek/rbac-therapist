@@ -21,8 +21,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	rbacv1 "k8s.io/api/rbac/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -42,10 +42,11 @@ import (
 )
 
 var (
-	testEnv   *envtest.Environment
-	k8sClient client.Client
-	ctx       context.Context
-	cancel    context.CancelFunc
+	testEnv    *envtest.Environment
+	k8sClient  client.Client
+	ctx        context.Context
+	cancel     context.CancelFunc
+	envStarted bool
 )
 
 func TestIntegration(t *testing.T) {
@@ -74,6 +75,7 @@ var _ = BeforeSuite(func() {
 	cfg, err := testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
+	envStarted = true
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).NotTo(HaveOccurred())
@@ -118,8 +120,12 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	cancel()
-	Expect(testEnv.Stop()).To(Succeed())
+	if cancel != nil {
+		cancel()
+	}
+	if envStarted && testEnv != nil {
+		Expect(testEnv.Stop()).To(Succeed())
+	}
 })
 
 // helpers ─────────────────────────────────────────────────────────────────────

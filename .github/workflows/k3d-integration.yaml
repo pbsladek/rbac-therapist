@@ -55,6 +55,7 @@ jobs:
           mkdir -p "${HOME}/bin"
           curl -fsSL -o "${HOME}/bin/k3d" "https://github.com/k3d-io/k3d/releases/download/${K3D_VERSION}/k3d-linux-amd64"
           chmod +x "${HOME}/bin/k3d"
+          export PATH="${HOME}/bin:${PATH}"
           echo "${HOME}/bin" >> "${GITHUB_PATH}"
           k3d version
 

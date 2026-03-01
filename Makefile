@@ -78,8 +78,9 @@ install-rbact: build-rbact ## Install rbact to $GOPATH/bin
 
 .PHONY: test
 test: envtest ## Run unit and integration tests
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-path $(LOCALBIN)/k8s -p path)" \
-		go test ./... -v -count=1
+	@set -eu; \
+	ASSETS="$$( $(ENVTEST) use -p path --bin-dir $(LOCALBIN)/k8s $(ENVTEST_K8S_VERSION) )"; \
+	KUBEBUILDER_ASSETS="$$ASSETS" go test ./... -v -count=1
 
 .PHONY: test-unit
 test-unit: ## Run unit tests only (no envtest required)
@@ -95,8 +96,9 @@ test-bench-parser-guard: ## Run parser benchmark regression guard (CI-equivalent
 
 .PHONY: test-integration
 test-integration: envtest ## Run integration tests with envtest
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-path $(LOCALBIN)/k8s -p path)" \
-		go test ./internal/controllers/... ./internal/integration/... -v -count=1
+	@set -eu; \
+	ASSETS="$$( $(ENVTEST) use -p path --bin-dir $(LOCALBIN)/k8s $(ENVTEST_K8S_VERSION) )"; \
+	KUBEBUILDER_ASSETS="$$ASSETS" go test ./internal/controllers/... ./internal/integration/... -v -count=1
 
 ENVTEST_K8S_VERSION ?= 1.32.0
 
