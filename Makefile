@@ -100,6 +100,10 @@ test-integration: envtest ## Run integration tests with envtest
 	ASSETS="$$( $(ENVTEST) use -p path --bin-dir $(LOCALBIN)/k8s $(ENVTEST_K8S_VERSION) )"; \
 	KUBEBUILDER_ASSETS="$$ASSETS" go test ./internal/controllers/... ./internal/integration/... -v -count=1
 
+.PHONY: test-k3d-local
+test-k3d-local: ## Run CI-like integration checks against a local k3d cluster
+	bash hack/local/k3d_integration_local.sh
+
 ENVTEST_K8S_VERSION ?= 1.32.0
 
 ##@ Deployment

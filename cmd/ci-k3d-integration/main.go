@@ -502,9 +502,14 @@ func waitForAccessPolicyReady(ctx context.Context, c ctrlclient.Client, name str
 		return nil
 	}
 
+	// Use a fresh context for final status retrieval because ctx may already
+	// be expired from the wait loop.
+	statusCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	var policy therapistv1alpha1.AccessPolicy
-	if getErr := c.Get(ctx, ctrlclient.ObjectKey{Name: name}, &policy); getErr != nil {
-		return fmt.Errorf("%s: timeout and failed to read policy status: %w", what, getErr)
+	if getErr := c.Get(statusCtx, ctrlclient.ObjectKey{Name: name}, &policy); getErr != nil {
+		return fmt.Errorf("%s: timeout; additionally failed to read latest policy status: %w", what, getErr)
 	}
 	cond := findCondition(policy.Status.Conditions, "Ready")
 	if cond == nil {
