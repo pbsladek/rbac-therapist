@@ -35,14 +35,26 @@ import (
 const (
 	sessionNotesName = "current"
 	rbacBinding      = "crisis-intervention-pass"
-	defaultTimeout   = 4 * time.Minute
+	defaultTimeout   = 12 * time.Minute
 
 	operatorNamespace  = "rbac-therapist-system"
 	operatorDeployment = "rbac-therapist-controller-manager"
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	timeout := defaultTimeout
+	if v := os.Getenv("K3D_INTEGRATION_TIMEOUT"); v != "" {
+		parsed, err := time.ParseDuration(v)
+		if err != nil {
+			failf("invalid K3D_INTEGRATION_TIMEOUT %q: %v", v, err)
+		}
+		if parsed <= 0 {
+			failf("K3D_INTEGRATION_TIMEOUT must be > 0, got %q", v)
+		}
+		timeout = parsed
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	scheme := runtime.NewScheme()
@@ -55,6 +67,9 @@ func main() {
 	if err != nil {
 		failf("getting kubeconfig: %v", err)
 	}
+	// Reduce client-side throttling during CI bootstrap and bulk apply phases.
+	cfg.QPS = 50
+	cfg.Burst = 100
 
 	c, err := ctrlclient.New(cfg, ctrlclient.Options{Scheme: scheme})
 	if err != nil {
@@ -267,6 +282,9 @@ func installOperator(ctx context.Context, cfg *rest.Config, c ctrlclient.Client)
 	if err := applyManifestGlob(ctx, dc, mapper, "config/crd/bases/*.yaml"); err != nil {
 		return err
 	}
+	if err := waitForAPIResources(ctx, mapper); err != nil {
+		return err
+	}
 	if err := ensureNamespace(ctx, c, operatorNamespace); err != nil {
 		return err
 	}
@@ -447,6 +465,25 @@ func buildRESTMapper(cfg *rest.Config) (*restmapper.DeferredDiscoveryRESTMapper,
 		return nil, err
 	}
 	return restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(discoveryClient)), nil
+}
+
+func waitForAPIResources(ctx context.Context, mapper *restmapper.DeferredDiscoveryRESTMapper) error {
+	required := []schema.GroupVersionKind{
+		{Group: "rbac.therapist.io", Version: "v1alpha1", Kind: "AccessPolicy"},
+		{Group: "rbac.therapist.io", Version: "v1alpha1", Kind: "Team"},
+		{Group: "rbac.therapist.io", Version: "v1alpha1", Kind: "RBACBinding"},
+		{Group: "rbac.therapist.io", Version: "v1alpha1", Kind: "RBACSession"},
+	}
+
+	return waitFor(ctx, "rbac-therapist CRD APIs discoverable", func(ctx context.Context) (bool, error) {
+		for _, gvk := range required {
+			if _, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version); err != nil {
+				mapper.Reset()
+				return false, nil
+			}
+		}
+		return true, nil
+	})
 }
 
 func isAccessPolicyReady(ctx context.Context, c ctrlclient.Client, name string) (bool, error) {
