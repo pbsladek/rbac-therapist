@@ -1,0 +1,15 @@
+apiVersion: rbac.therapist.io/v1alpha1
+kind: RBACBinding
+metadata:
+  name: incident-break-glass-admin
+spec:
+  rationale: >
+    Break-glass cluster admin access for SEV-1 response. Requires post-incident
+    review and automatic expiry.
+  subjects:
+    - kind: User
+      name: incident-commander@acme.com
+      apiGroup: rbac.authorization.k8s.io
+  clusterRole: cluster-admin
+  clusterWide: true
+  expiresAt: "2030-01-01T00:00:00Z"

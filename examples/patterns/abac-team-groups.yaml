@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: retail-prod
+  labels:
+    domain: retail
+    env: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: retail-staging
+  labels:
+    domain: retail
+    env: staging
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: retail-engineering
+spec:
+  description: Core retail team members.
+  members:
+    - kind: Group
+      name: retail-engineering@acme.com
+  tags:
+    domain: retail
+    env: production
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: retail-oncall
+spec:
+  description: Retail on-call inherits retail-engineering and adds incident responders.
+  members:
+    - kind: Group
+      name: retail-oncall@acme.com
+  extends:
+    - name: retail-engineering
+  tags:
+    domain: retail
+    env: production
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: retail-abac-oncall
+spec:
+  rationale: >
+    Retail on-call responders need automatic access to namespaces matching team tags
+    and explicit edit access for staging incident mitigation.
+  subjects:
+    - teamRef:
+        name: retail-oncall
+  roles:
+    - clusterRole: view
+      namespaces:
+        matchTeamTags: true
+    - clusterRole: edit
+      namespaces:
+        names:
+          - retail-staging

@@ -1,0 +1,168 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.0
+  name: teams.rbac.therapist.io
+spec:
+  group: rbac.therapist.io
+  names:
+    categories:
+    - rbac-therapist
+    kind: Team
+    listKind: TeamList
+    plural: teams
+    shortNames:
+    - team
+    singular: team
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - description: Number of effective members
+      jsonPath: .status.effectiveMembers
+      name: Members
+      type: integer
+    - description: Bound AccessPolicies
+      jsonPath: .status.boundPolicies
+      name: Policies
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          Team is a named group of Kubernetes subjects (Users, Groups, ServiceAccounts)
+          that share a purpose and a tag set.
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: TeamSpec defines the desired state of a Team.
+            properties:
+              description:
+                description: Description is a human-readable explanation of who this team is.
+                type: string
+              extends:
+                description: Extends lists other Teams whose members this team inherits.
+                items:
+                  description: TeamReference is a reference to another Team resource.
+                  properties:
+                    name:
+                      description: Name of the Team resource.
+                      minLength: 1
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              members:
+                description: Members lists the Kubernetes subjects that belong to this team.
+                items:
+                  description: Subject contains a reference to the object or user identities a role binding applies to.
+                  properties:
+                    apiGroup:
+                      type: string
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - kind
+                  - name
+                  type: object
+                type: array
+              tags:
+                additionalProperties:
+                  type: string
+                description: Tags are arbitrary key-value labels for ABAC namespace matching.
+                type: object
+            type: object
+          status:
+            description: TeamStatus defines the observed state of a Team.
+            properties:
+              boundPolicies:
+                description: BoundPolicies lists the names of AccessPolicies that reference this Team.
+                items:
+                  type: string
+                type: array
+              conditions:
+                description: Conditions represent the latest reconciliation state.
+                items:
+                  description: Condition contains details for one aspect of the current state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    message:
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              effectiveMembers:
+                description: EffectiveMembers is the computed union of this team's direct and inherited members.
+                items:
+                  description: Subject contains a reference to the object or user identities a role binding applies to.
+                  properties:
+                    apiGroup:
+                      type: string
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - kind
+                  - name
+                  type: object
+                type: array
+              observedGeneration:
+                description: ObservedGeneration is the .metadata.generation last reconciled.
+                format: int64
+                type: integer
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

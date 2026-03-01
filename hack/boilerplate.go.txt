@@ -1,0 +1,2 @@
+// Copyright 2026 pbsladek.
+// SPDX-License-Identifier: MIT

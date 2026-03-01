@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-monitoring
+  labels:
+    tier: platform
+    env: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-ops
+  labels:
+    tier: platform
+    env: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-staging
+  labels:
+    tier: app
+    env: staging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-qa
+  labels:
+    tier: app
+    env: qa
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data-prod
+  labels:
+    tier: data
+    env: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data-dev
+  labels:
+    tier: data
+    env: staging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shared-tools
+  labels:
+    tier: platform
+    env: production

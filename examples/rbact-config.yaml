@@ -1,0 +1,124 @@
+# rbact-config.yaml — Example rbact generate config
+#
+# Run: rbact generate -f examples/rbact-config.yaml -o examples/generated/
+#
+# This file demonstrates all major features of rbac-therapist:
+#   - Teams with tags (ABAC)
+#   - Team inheritance (extends)
+#   - Static namespace lists
+#   - Label-selector namespace matching
+#   - matchTeamTags (ABAC-style)
+#   - ClusterWide bindings
+#   - Inline subjects
+#   - Policy rationale
+
+teams:
+  - name: platform-engineers
+    description: Platform team responsible for cluster infrastructure and SRE functions
+    members:
+      - kind: Group
+        name: platform@acme.com
+      - kind: User
+        name: alice@acme.com
+    tags:
+      tier: platform
+      env: production
+      costCenter: cc-platform
+
+  - name: platform-oncall
+    description: Platform team on-call rotation — extends platform-engineers with additional members
+    members:
+      - kind: User
+        name: bob@acme.com
+    tags:
+      tier: platform
+      env: production
+    extends:
+      - platform-engineers  # inherits all platform-engineers members
+
+  - name: app-developers
+    description: Application development team
+    members:
+      - kind: Group
+        name: developers@acme.com
+    tags:
+      tier: app
+      env: staging
+
+  - name: ci-bots
+    description: CI/CD service accounts
+    members:
+      - kind: ServiceAccount
+        name: argocd-application-controller
+        namespace: argocd
+      - kind: ServiceAccount
+        name: github-actions
+        namespace: ci-system
+
+policies:
+  - name: platform-production-admin
+    teams: [platform-engineers]
+    rationale: >
+      Platform engineers require admin access to all production platform namespaces
+      to deploy infrastructure components and respond to incidents.
+      Approved in RFC-0042. Reviewed quarterly by security team.
+    access:
+      # Admin access to all namespaces tagged tier=platform, env=production
+      # (ABAC: team tags drive namespace selection automatically)
+      - clusterRole: admin
+        matchTeamTags: true
+
+      # Cluster-wide view (for reading cluster-scoped resources)
+      - clusterRole: view
+        clusterWide: true
+
+  - name: platform-oncall-escalation
+    teams: [platform-oncall]
+    rationale: >
+      On-call platform engineers require elevated access during incident response.
+      This policy extends production admin with cluster-admin for break-glass scenarios.
+      Access is time-limited and audited.
+    access:
+      - clusterRole: admin
+        matchTeamTags: true
+
+  - name: app-dev-staging
+    teams: [app-developers]
+    rationale: >
+      Application developers need edit access to staging namespaces to
+      test and iterate on application deployments.
+    access:
+      # Edit access to namespaces matching tier=app label selector
+      - clusterRole: edit
+        matchSelector:
+          tier: app
+          env: staging
+
+      # Read-only access to monitoring namespace for debugging
+      - clusterRole: view
+        namespaces: [monitoring]
+
+  - name: ci-deploy
+    teams: [ci-bots]
+    rationale: >
+      CI/CD pipelines require deploy access to all application namespaces
+      to deploy new versions of applications via ArgoCD.
+    access:
+      # Static namespace list for CI deploy access
+      - clusterRole: edit
+        namespaces:
+          - app-frontend
+          - app-backend
+          - app-workers
+
+  - name: argocd-cluster-access
+    subjects:
+      - kind: ServiceAccount
+        name: argocd-application-controller
+        namespace: argocd
+    rationale: >
+      ArgoCD application controller requires cluster-wide admin to manage
+      all application resources across namespaces.
+    access:
+      - clusterRole: cluster-admin
+        clusterWide: true

@@ -1,0 +1,163 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.0
+  name: rbacbindings.rbac.therapist.io
+spec:
+  group: rbac.therapist.io
+  names:
+    categories:
+    - rbac-therapist
+    kind: RBACBinding
+    listKind: RBACBindingList
+    plural: rbacbindings
+    shortNames:
+    - rb
+    singular: rbacbinding
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - description: ClusterRole being bound
+      jsonPath: .spec.clusterRole
+      name: Role
+      type: string
+    - jsonPath: .spec.clusterWide
+      name: ClusterWide
+      type: boolean
+    - jsonPath: .spec.expiresAt
+      name: Expires
+      type: date
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          RBACBinding is the emergency intervention — a direct, low-level subject-to-role
+          binding for exceptional cases not covered by AccessPolicy.
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: RBACBindingSpec defines the desired state of an RBACBinding.
+            properties:
+              clusterRole:
+                description: ClusterRole is the name of the ClusterRole to bind.
+                type: string
+              clusterWide:
+                default: false
+                description: ClusterWide creates a ClusterRoleBinding instead of a namespace-scoped RoleBinding.
+                type: boolean
+              expiresAt:
+                description: ExpiresAt is the hard expiry for this binding.
+                format: date-time
+                type: string
+              namespace:
+                description: Namespace is the namespace in which to create a RoleBinding.
+                type: string
+              rationale:
+                description: Rationale is a mandatory justification for this binding.
+                minLength: 10
+                type: string
+              role:
+                description: Role is the name of a namespaced Role to bind.
+                type: string
+              subjects:
+                description: Subjects lists who receives this binding.
+                items:
+                  properties:
+                    apiGroup:
+                      type: string
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - kind
+                  - name
+                  type: object
+                minItems: 1
+                type: array
+            required:
+            - rationale
+            - subjects
+            type: object
+          status:
+            description: RBACBindingStatus defines the observed state of an RBACBinding.
+            properties:
+              conditions:
+                items:
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    message:
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              managedBinding:
+                description: ManagedBinding is the single RoleBinding or ClusterRoleBinding created.
+                properties:
+                  kind:
+                    type: string
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                  roleName:
+                    type: string
+                required:
+                - kind
+                - name
+                - roleName
+                type: object
+              observedGeneration:
+                format: int64
+                type: integer
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

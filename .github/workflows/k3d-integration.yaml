@@ -1,0 +1,96 @@
+name: K3d Integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+    paths:
+      - "api/**"
+      - "cmd/**"
+      - "config/**"
+      - "internal/**"
+      - "pkg/**"
+      - "go.mod"
+      - "go.sum"
+      - "Dockerfile"
+      - ".github/workflows/k3d-integration.yaml"
+      - "hack/ci/k3d_integration.sh"
+      - "hack/ci/manifests/operator-deployment-ci.yaml"
+      - "examples/e2e/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: k3d-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  k3d-integration:
+    name: k3d integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CLUSTER_NAME: rbact-ci
+      OPERATOR_IMAGE: rbac-therapist/operator:ci
+      K3D_VERSION: v5.7.5
+      K3S_IMAGE: rancher/k3s:v1.32.2-k3s1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Verify Go toolchain
+        run: go version
+
+      - name: Install k3d
+        run: |
+          mkdir -p "${HOME}/bin"
+          curl -fsSL -o "${HOME}/bin/k3d" "https://github.com/k3d-io/k3d/releases/download/${K3D_VERSION}/k3d-linux-amd64"
+          chmod +x "${HOME}/bin/k3d"
+          echo "${HOME}/bin" >> "${GITHUB_PATH}"
+          k3d version
+
+      - name: Create k3d cluster
+        run: |
+          k3d cluster create "${CLUSTER_NAME}" --agents 1 --image "${K3S_IMAGE}" --wait
+          k3d cluster list
+
+      - name: Build operator image
+        run: docker build -t "${OPERATOR_IMAGE}" .
+
+      - name: Import operator image
+        run: k3d image import "${OPERATOR_IMAGE}" -c "${CLUSTER_NAME}"
+
+      - name: Run integration checks
+        env:
+          EXPECTED_KUBE_CONTEXT: k3d-${{ env.CLUSTER_NAME }}
+        run: bash hack/ci/k3d_integration.sh
+
+      - name: Collect diagnostics on failure
+        if: ${{ failure() }}
+        continue-on-error: true
+        run: |
+          mkdir -p /tmp/rbact-k3d-diag
+          k3d cluster list > /tmp/rbact-k3d-diag/clusters.txt
+          docker ps -a > /tmp/rbact-k3d-diag/docker-ps.txt
+
+      - name: Upload diagnostics artifact
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: k3d-integration-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/rbact-k3d-diag
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Delete k3d cluster
+        if: ${{ always() }}
+        run: k3d cluster delete "${CLUSTER_NAME}"

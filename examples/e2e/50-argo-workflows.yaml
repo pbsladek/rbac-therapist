@@ -1,0 +1,140 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argo-workflows
+  labels:
+    platform: argo
+    env: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argo-sandbox
+  labels:
+    platform: argo
+    env: staging
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argo-workflow-submitter
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflows", "workflowtemplates", "cronworkflows"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "events"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argo-workflow-operator
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflows", "workflows/finalizers", "workflowtemplates", "cronworkflows"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "events", "configmaps", "secrets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: argo-template-reader
+  namespace: argo-workflows
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflowtemplates", "clusterworkflowtemplates"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: argo-authors
+spec:
+  description: Argo authors for e2e fixture.
+  members:
+    - kind: Group
+      name: argo-authors@acme.com
+  tags:
+    platform: argo
+    env: production
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: argo-operators
+spec:
+  description: Argo operators extending authors for e2e fixture.
+  members:
+    - kind: Group
+      name: argo-operators@acme.com
+  extends:
+    - name: argo-authors
+  tags:
+    platform: argo
+    env: production
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: argo-auditors
+spec:
+  description: Argo template auditors for e2e fixture.
+  members:
+    - kind: Group
+      name: argo-auditors@acme.com
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: argo-submit-workflows
+spec:
+  rationale: >
+    E2E policy to verify Argo submit-level permissions and ABAC matching.
+  subjects:
+    - teamRef:
+        name: argo-authors
+  roles:
+    - clusterRole: argo-workflow-submitter
+      namespaces:
+        matchTeamTags: true
+    - clusterRole: argo-workflow-submitter
+      namespaces:
+        names:
+          - argo-sandbox
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: argo-operate-workflows
+spec:
+  rationale: >
+    E2E policy to verify inheritance from submit policy plus operator-level role.
+  extends:
+    - name: argo-submit-workflows
+  subjects:
+    - teamRef:
+        name: argo-operators
+  roles:
+    - clusterRole: argo-workflow-operator
+      namespaces:
+        names:
+          - argo-workflows
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: argo-template-audit-read
+spec:
+  rationale: >
+    E2E policy to verify namespaced Role usage with non-default RBAC rules.
+  subjects:
+    - teamRef:
+        name: argo-auditors
+  roles:
+    - role: argo-template-reader
+      namespaces:
+        names:
+          - argo-workflows

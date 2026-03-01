@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-core
+  labels:
+    tier: platform
+    env: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-dev
+  labels:
+    tier: platform
+    env: staging
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: platform-team
+spec:
+  description: Core platform engineers.
+  members:
+    - kind: Group
+      name: platform-team@acme.com
+  tags:
+    tier: platform
+    env: production
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: platform-incident
+spec:
+  description: Incident team that extends core platform membership.
+  members:
+    - kind: User
+      name: incident-lead@acme.com
+  extends:
+    - name: platform-team
+  tags:
+    tier: platform
+    env: production
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: platform-read-base
+spec:
+  rationale: Base read-only platform policy.
+  subjects:
+    - teamRef:
+        name: platform-team
+  roles:
+    - clusterRole: view
+      namespaces:
+        names:
+          - platform-core
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: platform-edit-mid
+spec:
+  rationale: Mid-layer policy adds edit access in staging platform namespaces.
+  extends:
+    - name: platform-read-base
+  subjects:
+    - teamRef:
+        name: platform-incident
+  roles:
+    - clusterRole: edit
+      namespaces:
+        names:
+          - platform-dev
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: platform-admin-leaf
+spec:
+  rationale: Leaf policy composes inherited grants and adds temporary admin scope.
+  extends:
+    - name: platform-edit-mid
+  subjects:
+    - teamRef:
+        name: platform-incident
+  roles:
+    - clusterRole: admin
+      namespaces:
+        names:
+          - platform-core

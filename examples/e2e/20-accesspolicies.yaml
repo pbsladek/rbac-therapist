@@ -1,0 +1,65 @@
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: base-read-policy
+spec:
+  rationale: Baseline read-only platform access for e2e policy inheritance checks.
+  subjects:
+    - teamRef:
+        name: platform-engineers
+  roles:
+    - clusterRole: view
+      namespaces:
+        names:
+          - platform-monitoring
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: platform-oncall-admin
+spec:
+  rationale: Platform on-call needs admin plus inherited read access for incident response.
+  extends:
+    - name: base-read-policy
+  subjects:
+    - teamRef:
+        name: platform-oncall
+  roles:
+    - clusterRole: admin
+      namespaces:
+        names:
+          - platform-monitoring
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: app-developer-edit
+spec:
+  rationale: App developers need edit permissions in staging namespaces.
+  subjects:
+    - teamRef:
+        name: app-developers
+  roles:
+    - clusterRole: edit
+      namespaces:
+        selector:
+          matchLabels:
+            tier: app
+          matchExpressions:
+            - key: env
+              operator: In
+              values: ["staging"]
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: tag-driven-platform-view
+spec:
+  rationale: Team tags should drive namespace access using matchTeamTags.
+  subjects:
+    - teamRef:
+        name: platform-engineers
+  roles:
+    - clusterRole: view
+      namespaces:
+        matchTeamTags: true

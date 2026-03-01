@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: workflow-ops
+  labels:
+    platform: workflow
+    env: production
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: workflow-operators
+spec:
+  description: Team operating workflow infrastructure.
+  members:
+    - kind: Group
+      name: workflow-operators@acme.com
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: workflow-managed-rbac
+spec:
+  rationale: >
+    AccessPolicy manages custom Role/ClusterRole resources and binds them to
+    workflow operators from a single declarative object.
+  subjects:
+    - teamRef:
+        name: workflow-operators
+  managedClusterRoles:
+    - name: workflow-controller-reader
+      rules:
+        - apiGroups: ["argoproj.io"]
+          resources: ["workflows", "workflowtemplates"]
+          verbs: ["get", "list", "watch"]
+  managedRoles:
+    - name: workflow-secret-reader
+      namespace: workflow-ops
+      rules:
+        - apiGroups: [""]
+          resources: ["secrets"]
+          verbs: ["get", "list"]
+  roles:
+    - clusterRole: workflow-controller-reader
+      namespaces:
+        names:
+          - workflow-ops
+    - role: workflow-secret-reader
+      namespaces:
+        names:
+          - workflow-ops

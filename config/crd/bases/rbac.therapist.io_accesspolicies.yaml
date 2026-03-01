@@ -1,0 +1,337 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.0
+  name: accesspolicies.rbac.therapist.io
+spec:
+  group: rbac.therapist.io
+  names:
+    categories:
+      - rbac-therapist
+    kind: AccessPolicy
+    listKind: AccessPolicyList
+    plural: accesspolicies
+    shortNames:
+      - ap
+    singular: accesspolicy
+  scope: Cluster
+  versions:
+    - additionalPrinterColumns:
+        - jsonPath: .spec.rationale
+          name: Rationale
+          type: string
+        - jsonPath: .status.conditions[?(@.type=='Ready')].status
+          name: Ready
+          type: string
+        - jsonPath: .spec.paused
+          name: Paused
+          type: boolean
+        - jsonPath: .spec.expiresAt
+          name: Expires
+          type: date
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+      name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          description: AccessPolicy is the primary RBAC abstraction in rbac-therapist.
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              description: AccessPolicySpec defines the desired state of an AccessPolicy.
+              properties:
+                expiresAt:
+                  description: ExpiresAt is the hard expiry time for this policy.
+                  format: date-time
+                  type: string
+                extends:
+                  description: Extends lists other AccessPolicies whose roles this policy inherits.
+                  items:
+                    properties:
+                      name:
+                        minLength: 1
+                        type: string
+                    required:
+                      - name
+                    type: object
+                  type: array
+                paused:
+                  default: false
+                  description: Paused suspends all reconciliation for this policy.
+                  type: boolean
+                rationale:
+                  description: Rationale is a mandatory human-readable justification for this policy.
+                  minLength: 10
+                  type: string
+                roles:
+                  description: Roles lists the role entries that define what access is granted.
+                  items:
+                    description: PolicyRole defines a single role grant within an AccessPolicy.
+                    properties:
+                      clusterRole:
+                        description: ClusterRole is the name of a ClusterRole to bind.
+                        type: string
+                      clusterWide:
+                        default: false
+                        description: ClusterWide creates a ClusterRoleBinding instead of namespace-scoped RoleBindings.
+                        type: boolean
+                      namespaces:
+                        description: Namespaces defines which namespaces to bind in when not clusterWide.
+                        properties:
+                          matchTeamTags:
+                            description: MatchTeamTags enables ABAC-style namespace matching based on team tags.
+                            type: boolean
+                          names:
+                            description: Names is a static list of namespace names to bind in.
+                            items:
+                              type: string
+                            type: array
+                          selector:
+                            description: Selector is a label selector to match namespaces dynamically.
+                            properties:
+                              matchExpressions:
+                                items:
+                                  properties:
+                                    key:
+                                      type: string
+                                    operator:
+                                      type: string
+                                    values:
+                                      items:
+                                        type: string
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                  required:
+                                    - key
+                                    - operator
+                                  type: object
+                                type: array
+                                x-kubernetes-list-type: atomic
+                              matchLabels:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                      role:
+                        description: Role is the name of a namespaced Role to bind.
+                        type: string
+                    type: object
+                  minItems: 1
+                  type: array
+                managedClusterRoles:
+                  description: ManagedClusterRoles are optional ClusterRoles that this AccessPolicy owns and reconciles before binding evaluation.
+                  items:
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      name:
+                        minLength: 1
+                        type: string
+                      rules:
+                        items:
+                          properties:
+                            apiGroups:
+                              items:
+                                type: string
+                              type: array
+                            nonResourceURLs:
+                              items:
+                                type: string
+                              type: array
+                            resourceNames:
+                              items:
+                                type: string
+                              type: array
+                            resources:
+                              items:
+                                type: string
+                              type: array
+                            verbs:
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        minItems: 1
+                        type: array
+                    required:
+                      - name
+                      - rules
+                    type: object
+                  type: array
+                managedRoles:
+                  description: ManagedRoles are optional namespaced Roles that this AccessPolicy owns and reconciles before binding evaluation.
+                  items:
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      name:
+                        minLength: 1
+                        type: string
+                      namespace:
+                        minLength: 1
+                        type: string
+                      rules:
+                        items:
+                          properties:
+                            apiGroups:
+                              items:
+                                type: string
+                              type: array
+                            nonResourceURLs:
+                              items:
+                                type: string
+                              type: array
+                            resourceNames:
+                              items:
+                                type: string
+                              type: array
+                            resources:
+                              items:
+                                type: string
+                              type: array
+                            verbs:
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        minItems: 1
+                        type: array
+                    required:
+                      - name
+                      - namespace
+                      - rules
+                    type: object
+                  type: array
+                subjects:
+                  description: Subjects lists who receives the access defined in roles.
+                  items:
+                    description: PolicySubject is a single entry in spec.subjects.
+                    properties:
+                      inline:
+                        description: Inline is a direct Kubernetes subject reference.
+                        properties:
+                          apiGroup:
+                            type: string
+                          kind:
+                            type: string
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                        required:
+                          - kind
+                          - name
+                        type: object
+                      teamRef:
+                        description: TeamRef references a Team CRD by name.
+                        properties:
+                          name:
+                            minLength: 1
+                            type: string
+                        required:
+                          - name
+                        type: object
+                    type: object
+                  minItems: 1
+                  type: array
+              required:
+                - rationale
+                - roles
+                - subjects
+              type: object
+            status:
+              description: AccessPolicyStatus defines the observed state of an AccessPolicy.
+              properties:
+                conditions:
+                  items:
+                    properties:
+                      lastTransitionTime:
+                        format: date-time
+                        type: string
+                      message:
+                        maxLength: 32768
+                        type: string
+                      observedGeneration:
+                        format: int64
+                        minimum: 0
+                        type: integer
+                      reason:
+                        maxLength: 1024
+                        minLength: 1
+                        pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                        type: string
+                      status:
+                        enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                        type: string
+                      type:
+                        maxLength: 316
+                        pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                        type: string
+                    required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                    type: object
+                  type: array
+                  x-kubernetes-list-map-keys:
+                    - type
+                  x-kubernetes-list-type: map
+                lastReconcileTime:
+                  format: date-time
+                  type: string
+                managedBindings:
+                  description: ManagedBindings lists the RoleBindings and ClusterRoleBindings managed by this policy.
+                  items:
+                    properties:
+                      kind:
+                        type: string
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                      roleName:
+                        type: string
+                    required:
+                      - kind
+                      - name
+                      - roleName
+                    type: object
+                  type: array
+                observedGeneration:
+                  format: int64
+                  type: integer
+                observedHash:
+                  type: string
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}

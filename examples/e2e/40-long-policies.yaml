@@ -1,0 +1,104 @@
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: long-policy-base
+spec:
+  rationale: >
+    Base layer for long-policy e2e coverage. Provides broad read-only visibility
+    across platform and data namespaces so inheritance chains can be validated
+    under a larger manifest footprint.
+  subjects:
+    - teamRef:
+        name: platform-engineers
+    - teamRef:
+        name: data-engineers
+  roles:
+    - clusterRole: view
+      namespaces:
+        names:
+          - platform-monitoring
+          - platform-ops
+          - shared-tools
+          - data-prod
+          - data-dev
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: long-policy-mid
+spec:
+  rationale: >
+    Mid-layer policy for inheritance stress tests. Adds edit access by selector
+    while inheriting read-only grants from long-policy-base.
+  extends:
+    - name: long-policy-base
+  subjects:
+    - teamRef:
+        name: platform-oncall
+  roles:
+    - clusterRole: edit
+      namespaces:
+        selector:
+          matchExpressions:
+            - key: tier
+              operator: In
+              values: ["platform", "data"]
+            - key: env
+              operator: In
+              values: ["production", "staging"]
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: long-policy-leaf
+spec:
+  rationale: >
+    Leaf policy used by e2e to verify long policy specs with team groups, inline
+    subjects, ABAC namespace matching, and multi-level inheritance. This policy
+    intentionally combines many role entries to exercise parser and reconciler paths.
+  extends:
+    - name: long-policy-mid
+  subjects:
+    - teamRef:
+        name: platform-oncall
+    - teamRef:
+        name: app-developers
+    - teamRef:
+        name: security-auditors
+    - inline:
+        kind: Group
+        name: sre-managers@acme.com
+        apiGroup: rbac.authorization.k8s.io
+  roles:
+    - clusterRole: admin
+      namespaces:
+        names:
+          - platform-monitoring
+          - platform-ops
+          - shared-tools
+    - clusterRole: view
+      namespaces:
+        matchTeamTags: true
+    - clusterRole: edit
+      namespaces:
+        selector:
+          matchLabels:
+            tier: app
+          matchExpressions:
+            - key: env
+              operator: In
+              values: ["staging", "qa"]
+    - clusterRole: view
+      namespaces:
+        names:
+          - app-staging
+          - app-qa
+          - data-prod
+          - data-dev
+    - clusterRole: view
+      namespaces:
+        selector:
+          matchExpressions:
+            - key: tier
+              operator: In
+              values: ["platform", "data", "app"]

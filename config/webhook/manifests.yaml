@@ -1,0 +1,142 @@
+---
+# ValidatingWebhookConfiguration for AccessPolicy
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: rbac-therapist-validating-webhook-configuration
+  annotations:
+    # cert-manager injects the caBundle automatically.
+    cert-manager.io/inject-ca-from: rbac-therapist-system/rbac-therapist-serving-cert
+webhooks:
+  - name: vaccesspolicy.kb.io
+    admissionReviewVersions: [v1]
+    clientConfig:
+      service:
+        name: rbac-therapist-webhook-service
+        namespace: rbac-therapist-system
+        path: /validate-rbac-therapist-io-v1alpha1-accesspolicy
+    failurePolicy: Fail
+    rules:
+      - apiGroups: [rbac.therapist.io]
+        apiVersions: [v1alpha1]
+        operations: [CREATE, UPDATE]
+        resources: [accesspolicies]
+    sideEffects: None
+  - name: vteam.kb.io
+    admissionReviewVersions: [v1]
+    clientConfig:
+      service:
+        name: rbac-therapist-webhook-service
+        namespace: rbac-therapist-system
+        path: /validate-rbac-therapist-io-v1alpha1-team
+    failurePolicy: Fail
+    rules:
+      - apiGroups: [rbac.therapist.io]
+        apiVersions: [v1alpha1]
+        operations: [CREATE, UPDATE]
+        resources: [teams]
+    sideEffects: None
+  - name: vrbacbinding.kb.io
+    admissionReviewVersions: [v1]
+    clientConfig:
+      service:
+        name: rbac-therapist-webhook-service
+        namespace: rbac-therapist-system
+        path: /validate-rbac-therapist-io-v1alpha1-rbacbinding
+    failurePolicy: Fail
+    rules:
+      - apiGroups: [rbac.therapist.io]
+        apiVersions: [v1alpha1]
+        operations: [CREATE, UPDATE]
+        resources: [rbacbindings]
+    sideEffects: None
+---
+# MutatingWebhookConfiguration for defaulting
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: rbac-therapist-mutating-webhook-configuration
+  annotations:
+    cert-manager.io/inject-ca-from: rbac-therapist-system/rbac-therapist-serving-cert
+webhooks:
+  - name: maccesspolicy.kb.io
+    admissionReviewVersions: [v1]
+    clientConfig:
+      service:
+        name: rbac-therapist-webhook-service
+        namespace: rbac-therapist-system
+        path: /mutate-rbac-therapist-io-v1alpha1-accesspolicy
+    failurePolicy: Fail
+    rules:
+      - apiGroups: [rbac.therapist.io]
+        apiVersions: [v1alpha1]
+        operations: [CREATE, UPDATE]
+        resources: [accesspolicies]
+    sideEffects: None
+  - name: mteam.kb.io
+    admissionReviewVersions: [v1]
+    clientConfig:
+      service:
+        name: rbac-therapist-webhook-service
+        namespace: rbac-therapist-system
+        path: /mutate-rbac-therapist-io-v1alpha1-team
+    failurePolicy: Fail
+    rules:
+      - apiGroups: [rbac.therapist.io]
+        apiVersions: [v1alpha1]
+        operations: [CREATE, UPDATE]
+        resources: [teams]
+    sideEffects: None
+  - name: mrbacbinding.kb.io
+    admissionReviewVersions: [v1]
+    clientConfig:
+      service:
+        name: rbac-therapist-webhook-service
+        namespace: rbac-therapist-system
+        path: /mutate-rbac-therapist-io-v1alpha1-rbacbinding
+    failurePolicy: Fail
+    rules:
+      - apiGroups: [rbac.therapist.io]
+        apiVersions: [v1alpha1]
+        operations: [CREATE, UPDATE]
+        resources: [rbacbindings]
+    sideEffects: None
+---
+# Service for webhooks
+apiVersion: v1
+kind: Service
+metadata:
+  name: rbac-therapist-webhook-service
+  namespace: rbac-therapist-system
+  labels:
+    app.kubernetes.io/name: rbac-therapist
+spec:
+  ports:
+    - port: 443
+      protocol: TCP
+      targetPort: 9443
+  selector:
+    control-plane: controller-manager
+---
+# Certificate for webhook TLS (requires cert-manager)
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rbac-therapist-serving-cert
+  namespace: rbac-therapist-system
+spec:
+  dnsNames:
+    - rbac-therapist-webhook-service.rbac-therapist-system.svc
+    - rbac-therapist-webhook-service.rbac-therapist-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: rbac-therapist-selfsigned-issuer
+  secretName: rbac-therapist-webhook-server-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: rbac-therapist-selfsigned-issuer
+  namespace: rbac-therapist-system
+spec:
+  selfSigned: {}

@@ -1,0 +1,63 @@
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: platform-engineers
+spec:
+  description: Platform engineering team for e2e validation.
+  members:
+    - kind: Group
+      name: platform@acme.com
+  tags:
+    tier: platform
+    env: production
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: platform-oncall
+spec:
+  description: On-call team extending platform-engineers.
+  members:
+    - kind: User
+      name: oncall-user@acme.com
+  extends:
+    - name: platform-engineers
+  tags:
+    tier: platform
+    env: production
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: app-developers
+spec:
+  description: Application developers for staging namespaces.
+  members:
+    - kind: Group
+      name: developers@acme.com
+  tags:
+    tier: app
+    env: staging
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: data-engineers
+spec:
+  description: Data engineering team for long-policy e2e tests.
+  members:
+    - kind: Group
+      name: data@acme.com
+  tags:
+    tier: data
+    env: production
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: security-auditors
+spec:
+  description: Security auditing team for broad read-only access examples.
+  members:
+    - kind: Group
+      name: security-auditors@acme.com

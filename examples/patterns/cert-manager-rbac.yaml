@@ -1,0 +1,143 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager
+  labels:
+    platform: cert-manager
+    env: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-certificates
+  labels:
+    platform: cert-manager
+    env: staging
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cert-manager-requester
+rules:
+  - apiGroups: ["cert-manager.io"]
+    resources: ["certificates", "certificaterequests"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cert-manager-issuer-admin
+rules:
+  - apiGroups: ["cert-manager.io"]
+    resources: ["issuers", "clusterissuers", "certificates", "certificaterequests"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["acme.cert-manager.io"]
+    resources: ["orders", "challenges"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cert-manager-secret-reader
+  namespace: cert-manager
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: certificate-requesters
+spec:
+  description: App teams requesting and renewing certificates.
+  members:
+    - kind: Group
+      name: certificate-requesters@acme.com
+  tags:
+    platform: cert-manager
+    env: production
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: certificate-admins
+spec:
+  description: Platform PKI administrators for issuers and certificate operations.
+  members:
+    - kind: Group
+      name: certificate-admins@acme.com
+  extends:
+    - name: certificate-requesters
+  tags:
+    platform: cert-manager
+    env: production
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: Team
+metadata:
+  name: pki-auditors
+spec:
+  description: Read-only auditors for cert-manager operational data.
+  members:
+    - kind: Group
+      name: pki-auditors@acme.com
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: cert-manager-request-access
+spec:
+  rationale: >
+    Certificate requesters need access to create and update certificates in
+    cert-manager tagged namespaces.
+  subjects:
+    - teamRef:
+        name: certificate-requesters
+  roles:
+    - clusterRole: cert-manager-requester
+      namespaces:
+        matchTeamTags: true
+    - clusterRole: cert-manager-requester
+      namespaces:
+        names:
+          - app-certificates
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: cert-manager-admin-access
+spec:
+  rationale: >
+    PKI administrators require issuer and certificate lifecycle permissions and
+    inherit requester permissions.
+  extends:
+    - name: cert-manager-request-access
+  subjects:
+    - teamRef:
+        name: certificate-admins
+  roles:
+    - clusterRole: cert-manager-issuer-admin
+      namespaces:
+        names:
+          - cert-manager
+---
+apiVersion: rbac.therapist.io/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: cert-manager-audit-secrets
+spec:
+  rationale: >
+    Auditors need read-only secret metadata in the cert-manager namespace to
+    support compliance investigations.
+  subjects:
+    - teamRef:
+        name: pki-auditors
+  roles:
+    - role: cert-manager-secret-reader
+      namespaces:
+        names:
+          - cert-manager

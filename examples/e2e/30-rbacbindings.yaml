@@ -1,0 +1,12 @@
+apiVersion: rbac.therapist.io/v1alpha1
+kind: RBACBinding
+metadata:
+  name: ci-break-glass-view
+spec:
+  rationale: Temporary break-glass style binding for CI e2e verification.
+  subjects:
+    - kind: User
+      name: ci-breakglass@acme.com
+  clusterRole: view
+  clusterWide: true
+  expiresAt: "2099-01-01T00:00:00Z"
