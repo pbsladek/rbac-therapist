@@ -290,6 +290,9 @@ func installOperator(ctx context.Context, cfg *rest.Config, c ctrlclient.Client)
 	if err := applyManifestGlob(ctx, dc, mapper, "config/crd/bases/*.yaml"); err != nil {
 		return err
 	}
+	if err := ensureNamespace(ctx, c, operatorNamespace); err != nil {
+		return err
+	}
 	if err := applyManifestFile(ctx, dc, mapper, "config/rbac/service_account.yaml"); err != nil {
 		return err
 	}
@@ -316,6 +319,19 @@ func installOperator(ctx context.Context, cfg *rest.Config, c ctrlclient.Client)
 			return false, err
 		}
 		return deploy.Status.AvailableReplicas >= 1, nil
+	})
+}
+
+func ensureNamespace(ctx context.Context, c ctrlclient.Client, name string) error {
+	var ns corev1.Namespace
+	if err := c.Get(ctx, ctrlclient.ObjectKey{Name: name}, &ns); err == nil {
+		return nil
+	} else if !apierrors.IsNotFound(err) {
+		return err
+	}
+
+	return c.Create(ctx, &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: name},
 	})
 }
 

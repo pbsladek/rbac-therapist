@@ -13,6 +13,8 @@ package hasher
 import (
 	"crypto/sha256"
 	"fmt"
+	"strings"
+	"unicode"
 )
 
 const (
@@ -61,6 +63,25 @@ func ManagedLabels(policyName, policyKind, hash string) map[string]string {
 		ManagedByLabel:  ManagedByValue,
 		PolicyLabel:     policyName,
 		PolicyKindLabel: policyKind,
-		HashLabel:       hash,
+		HashLabel:       hashLabelValue(hash),
 	}
+}
+
+func hashLabelValue(hash string) string {
+	normalized := strings.TrimPrefix(hash, "sha256:")
+	var b strings.Builder
+	b.Grow(len(normalized))
+	for _, r := range normalized {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' || r == '.' {
+			b.WriteRune(r)
+		}
+	}
+	s := b.String()
+	if s == "" {
+		return "0"
+	}
+	if len(s) > 63 {
+		s = s[:63]
+	}
+	return s
 }

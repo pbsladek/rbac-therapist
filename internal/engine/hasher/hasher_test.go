@@ -1,11 +1,12 @@
 package hasher_test
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/rbac-therapist/rbac-therapist/internal/engine/hasher"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBindingName_format(t *testing.T) {
@@ -37,4 +38,12 @@ func TestManagedLabels(t *testing.T) {
 	assert.Equal(t, "rbac-therapist", labels[hasher.ManagedByLabel])
 	assert.Equal(t, "my-policy", labels[hasher.PolicyLabel])
 	assert.Equal(t, "AccessPolicy", labels[hasher.PolicyKindLabel])
+	assert.Equal(t, "abc123", labels[hasher.HashLabel])
+}
+
+func TestManagedLabels_hashLabelValueIsKubernetesSafe(t *testing.T) {
+	labels := hasher.ManagedLabels("my-policy", "AccessPolicy", "sha256:06aadb010e904b27233a6f8f82160ce3e85dcde32da6c0893d649e5c3a73c061")
+	hash := labels[hasher.HashLabel]
+	assert.LessOrEqual(t, len(hash), 63)
+	assert.Regexp(t, regexp.MustCompile(`^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$`), hash)
 }
