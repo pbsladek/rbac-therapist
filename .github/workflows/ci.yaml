@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   unit-tests:
-    name: Unit Tests (envtest, Go 1.26.x)
+    name: Unit Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,11 +33,11 @@ jobs:
       - name: Download Dependencies
         run: go mod download
 
-      - name: Run Unit Test Pipeline
-        run: make test
+      - name: Run Unit Tests
+        run: make test-unit
 
   build:
-    name: Build (Go 1.26.x)
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -59,7 +59,7 @@ jobs:
         run: make build
 
   parser-bench:
-    name: Parser Benchmarks (${{ matrix.bench_name }})
+    name: Parser Benchmarks
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

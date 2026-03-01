@@ -69,51 +69,28 @@ func main() {
 		failf("applying e2e examples: %v", err)
 	}
 
-	if err := waitFor(ctx, "AccessPolicy freud-tag-intake-view Ready", func(ctx context.Context) (bool, error) {
-		return isAccessPolicyReady(ctx, c, "freud-tag-intake-view")
-	}); err != nil {
+	if err := waitForAccessPolicyReady(ctx, c, "freud-tag-intake-view"); err != nil {
 		failf("%v", err)
 	}
-
-	if err := waitFor(ctx, "AccessPolicy gottman-repair-protocol Ready", func(ctx context.Context) (bool, error) {
-		return isAccessPolicyReady(ctx, c, "gottman-repair-protocol")
-	}); err != nil {
+	if err := waitForAccessPolicyReady(ctx, c, "gottman-repair-protocol"); err != nil {
 		failf("%v", err)
 	}
-
-	if err := waitFor(ctx, "AccessPolicy boundary-builders-edit Ready", func(ctx context.Context) (bool, error) {
-		return isAccessPolicyReady(ctx, c, "boundary-builders-edit")
-	}); err != nil {
+	if err := waitForAccessPolicyReady(ctx, c, "boundary-builders-edit"); err != nil {
 		failf("%v", err)
 	}
-
-	if err := waitFor(ctx, "AccessPolicy deep-work-plan Ready", func(ctx context.Context) (bool, error) {
-		return isAccessPolicyReady(ctx, c, "deep-work-plan")
-	}); err != nil {
+	if err := waitForAccessPolicyReady(ctx, c, "deep-work-plan"); err != nil {
 		failf("%v", err)
 	}
-
-	if err := waitFor(ctx, "AccessPolicy argo-submit-workflows Ready", func(ctx context.Context) (bool, error) {
-		return isAccessPolicyReady(ctx, c, "argo-submit-workflows")
-	}); err != nil {
+	if err := waitForAccessPolicyReady(ctx, c, "argo-submit-workflows"); err != nil {
 		failf("%v", err)
 	}
-
-	if err := waitFor(ctx, "AccessPolicy argo-operate-workflows Ready", func(ctx context.Context) (bool, error) {
-		return isAccessPolicyReady(ctx, c, "argo-operate-workflows")
-	}); err != nil {
+	if err := waitForAccessPolicyReady(ctx, c, "argo-operate-workflows"); err != nil {
 		failf("%v", err)
 	}
-
-	if err := waitFor(ctx, "AccessPolicy argo-template-audit-read Ready", func(ctx context.Context) (bool, error) {
-		return isAccessPolicyReady(ctx, c, "argo-template-audit-read")
-	}); err != nil {
+	if err := waitForAccessPolicyReady(ctx, c, "argo-template-audit-read"); err != nil {
 		failf("%v", err)
 	}
-
-	if err := waitFor(ctx, "AccessPolicy boundary-contracts-e2e Ready", func(ctx context.Context) (bool, error) {
-		return isAccessPolicyReady(ctx, c, "boundary-contracts-e2e")
-	}); err != nil {
+	if err := waitForAccessPolicyReady(ctx, c, "boundary-contracts-e2e"); err != nil {
 		failf("%v", err)
 	}
 
@@ -480,6 +457,25 @@ func isAccessPolicyReady(ctx context.Context, c ctrlclient.Client, name string) 
 	return conditionStatus(policy.Status.Conditions, "Ready") == metav1.ConditionTrue, nil
 }
 
+func waitForAccessPolicyReady(ctx context.Context, c ctrlclient.Client, name string) error {
+	what := fmt.Sprintf("AccessPolicy %s Ready", name)
+	if err := waitFor(ctx, what, func(ctx context.Context) (bool, error) {
+		return isAccessPolicyReady(ctx, c, name)
+	}); err == nil {
+		return nil
+	}
+
+	var policy therapistv1alpha1.AccessPolicy
+	if getErr := c.Get(ctx, ctrlclient.ObjectKey{Name: name}, &policy); getErr != nil {
+		return fmt.Errorf("%s: timeout and failed to read policy status: %w", what, getErr)
+	}
+	cond := findCondition(policy.Status.Conditions, "Ready")
+	if cond == nil {
+		return fmt.Errorf("%s: timeout and no Ready condition present", what)
+	}
+	return fmt.Errorf("%s: timeout; latest Ready=%s reason=%s message=%s", what, cond.Status, cond.Reason, cond.Message)
+}
+
 func accessPolicyHasManagedRole(ctx context.Context, c ctrlclient.Client, name, role string) (bool, error) {
 	var policy therapistv1alpha1.AccessPolicy
 	if err := c.Get(ctx, ctrlclient.ObjectKey{Name: name}, &policy); err != nil {
@@ -568,6 +564,15 @@ func conditionStatus(conditions []metav1.Condition, condType string) metav1.Cond
 		}
 	}
 	return metav1.ConditionUnknown
+}
+
+func findCondition(conditions []metav1.Condition, condType string) *metav1.Condition {
+	for i := range conditions {
+		if conditions[i].Type == condType {
+			return &conditions[i]
+		}
+	}
+	return nil
 }
 
 func waitFor(ctx context.Context, what string, fn func(context.Context) (bool, error)) error {
